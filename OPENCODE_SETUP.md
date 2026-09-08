@@ -114,6 +114,7 @@ opencode run "Ответь одним словом: READY"
 opencode run \
   --agent plan \
   --file practices/practice_01/TRAINING_PR.diff \
+  -- \
   "Используй только приложенный diff. Не читай другие файлы репозитория. Посмотри PR и найди проблемы."
 ```
 
