@@ -21,7 +21,7 @@
 
 | Занятие | M3200 | M3201 | M3202 | M3203 | M3204 |
 | --- | --- | --- | --- | --- | --- |
-| Практика 1. Проект: знакомим с техническими бизнес-контекстами |[Ссылка](https://avito.ktalk.ru/recordings/BhfuSd9Ul2N97QaI5qmW) | | | | |
+| Практика 1. Проект: знакомим с техническими бизнес-контекстами |[Ссылка](https://avito.ktalk.ru/recordings/BhfuSd9Ul2N97QaI5qmW) |[Ссылка](https://avito.ktalk.ru/recordings/RUUCJsvyG0ExhgVDJnnT) |[Ссылка](https://avito.ktalk.ru/recordings/9LkxXkep0waOw72mx9Em)|[Cсылка](https://avito.ktalk.ru/recordings/dFiBoeC0tYXXOw1X2dbE)|[Ссылка](https://avito.ktalk.ru/recordings/aiZOTHeLfapVGQ5LZAqh)|
 | Практика 2. Дорабатываем артефакты для программирования логики | | | | | |
 | Практика 3. Создание проекта. Реализация первой фичи | | | | | |
 | Практика 4. MCP и скиллы | | | | | |
