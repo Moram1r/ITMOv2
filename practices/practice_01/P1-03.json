@@ -1,0 +1,30 @@
+{
+  "summary": "Добавлен POST /api/reviews и метод ReviewService.review, который отправляет diff во внешний LLM и возвращает {\"comment\": ...}. В коде нет редактирования секретов, нет проверки порога 20k и 413, нет таймаута/обработки ошибок и структура ответа не соответствует требованиям.",
+  "risks": [
+    {
+      "file": "app/review_service.py",
+      "line": "n/a",
+      "risk": "Нарушение SEC-1: diff отправляется во внешний LLM без удаления секретов.",
+      "evidence": "def review(self, diff: str) -> dict[str, str]:\n    prompt = f\"Review this pull request and find problems:\\n{diff}\"\n    answer = self.llm.generate(prompt)"
+    },
+    {
+      "file": "app/api.py",
+      "line": "n/a",
+      "risk": "Нарушение API-1: нет проверки длины diff (>20 000 символов) и возврата HTTP 413.",
+      "evidence": "@app.post(\"/api/reviews\")\ndef create_review(payload: dict) -> dict[str, str]:\n    return review_service.review(payload[\"diff\"])"
+    },
+    {
+      "file": "app/review_service.py",
+      "line": "n/a",
+      "risk": "Нарушение OUT-1: структура ответа не соответствует требуемым полям summary/risks/checks.",
+      "evidence": "return {\"comment\": answer}"
+    }
+  ],
+  "checks": [
+    "SEC-1: Передать в /api/reviews diff, содержащий тестовую строку с секретом (например, \"token=TEST\"); проверить, что перед отправкой в LLM в prompt секреты заменяются на REDACTED.",
+    "API-1: Отправить diff длиной 20001+ символов в /api/reviews и ожидать HTTP 413; убедиться, что тело ответа указывает на превышение лимита.",
+    "REL-1: Замокать LLM.generate так, чтобы он зависал >10 секунд; убедиться, что сервис прерывает вызов через 10 секунд и возвращает контролируемый ответ (без необработанного исключения).",
+    "OUT-1: Вызвать /api/reviews с валидным diff и проверить, что ответ содержит поля summary (строка), risks (массив объектов с file/line/evidence/risk), checks (массив строк).",
+    "OBS-1: Включить захват логов при обработке запроса; убедиться, что логируются только request_id, длительность и статус, а содержимое diff и ответ модели не попадают в логи."
+  ]
+}
