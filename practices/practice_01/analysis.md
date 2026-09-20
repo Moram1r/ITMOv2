@@ -1,5 +1,7 @@
 # Анализ процесса: AS IS и TO BE
 
+Файл ведёт OpenCode. Обсудите с агентом содержание и проверьте предложенный diff. Все дополнения и исправления поручайте агенту в чате.
+
 ## AS IS
 
 Событие: пользователь отправляет POST `/api/reviews` с JSON `{"diff": str}`. Endpoint вызывает `review_service.review(payload["diff"])` (app/api.py:35-37). Сервис формирует prompt `"Review this pull request and find problems:\n{diff}"` и синхронно вызывает внешний `llm.generate(prompt)` (app/review_service.py:19-22). Ответ LLM как строка возвращается клиенту в поле `comment`.
