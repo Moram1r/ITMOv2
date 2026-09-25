@@ -2,15 +2,15 @@
 
 Файл ведёт OpenCode по вашим запросам. Агент записывает фактические результаты экспериментов и вносит изменения в связанные файлы. Свою оценку сообщайте ему в чате; вручную заполнять шаблон не нужно.
 
-- Выбранный слабый артефакт Практики 1:
-- Что в нём нужно улучшить:
-- Как поймём, что изменение полезно:
+- Выбранный слабый артефакт Практики 1: `tests_load.md`
+- Что в нём нужно улучшить: повысить воспроизводимость и проверяемость сценариев. Конкретно: уточнить профиль нагрузки (warm-up/ramp-up), зафиксировать инструменты и методики измерения (например, k6 сценарии и нужные метрики), описать способ подтверждения требований из CASE.md (API-1, REL-1, OUT-1, OBS-1), убрать двусмысленности по данным и окружению, добавить критерии приёма для каждой строки таблицы.
+- Как поймём, что изменение полезно: любой инженер сможет по таблице воспроизвести тест и принять бинарное решение без чата. Пороговые значения согласованы с метриками из Практики 1; результат стабилен в 3 прогонах (расхождение p95 <= 10%), подтверждения ссылаются на конкретные артефакты/логи, а сценарии покрывают правила SEC/API/REL/OUT/OBS.
 
 | Техника | Файл эксперимента | Изменённый файл Практики 1 | Конкретное изменение | Проверка | Что отклонили |
 |---|---|---|---|---|---|
-| Few-shot | [`few_shot/experiment.md`](few_shot/experiment.md) |  |  |  |  |
-| R.C.T.F. | [`rctf/experiment.md`](rctf/experiment.md) |  |  |  |  |
-| Chain of Verification | [`chain_of_verification/experiment.md`](chain_of_verification/experiment.md) |  |  |  |  |
-| Tree of Thoughts | [`tree_of_thoughts/experiment.md`](tree_of_thoughts/experiment.md) |  |  |  |  |
-| RAG | [`rag/experiment.md`](rag/experiment.md) |  |  |  |  |
-| ReAct | [`react/experiment.md`](react/experiment.md) |  |  |  |  |
+| Few-shot | [`few_shot/experiment.md`](few_shot/experiment.md) | `practices/practice_02/few_shot/tests_load.md` | Уточнены профили нагрузки, метрики k6 и явные подтверждения по CASE.md | Сверка с метриками Практики 1; структура файла сохранена | Нерелевантные расплывчатые формулировки
+| R.C.T.F. | [`rctf/experiment.md`](rctf/experiment.md) | `practices/practice_02/rctf/tests_load.md` | Унификация RCTF: роли, контекст, бинарные пороги и подтверждения | Кросспроверка с CASE.md и метриками; структура файла сохранена | Шаблонные описания без источников
+| Chain of Verification | [`chain_of_verification/experiment.md`](chain_of_verification/experiment.md) | `practices/practice_02/chain_of_verification/tests_load.md` | Уточнили «Пиковая нагрузка»: добавлен warm-up, повторяемость, явные метрики | Проверили вопросами и источниками (problem.md, CASE.md); структура сохранена | Старую нечеткую формулировку пика
+| Tree of Thoughts | [`tree_of_thoughts/experiment.md`](tree_of_thoughts/experiment.md) | `practices/practice_02/tree_of_thoughts/tests_load.md` | Добавлено требование 3 прогонов и разграничены базовый/доп. сценарии | Повторяемость p95 в 3 прогонах; структура файла сохранена | Чисто стрессовый baseline
+| RAG | [`rag/experiment.md`](rag/experiment.md) | `practices/practice_02/rag/tests_load.md` | Добавлены явные ссылки на источники (problem.md, context.md, analysis.md) | Сопоставление порогов с метриками и правилами; структура сохранена | Любые утверждения без источника
+| ReAct | [`react/experiment.md`](react/experiment.md) | `practices/practice_02/react/tests_load.md` | Пошаговые подтверждения для каждого сценария | Проверка наличия конкретных шагов; структура файла сохранена | Избыточные шаги без источников
