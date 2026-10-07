@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "plugins": [
     "./.opencode/plugins/check-after-edit.js"
   ],
@@ -9,6 +10,13 @@
         "url": "https://mcp.context7.com/mcp",
         "disabled": false,
         "codemode": false
+      },
+      "text-stats": {
+        "type": "local",
+        "command": [
+          "/home/moramir/ITMO/ITMOv2/practices/practice_04/project/.venv/bin/python3",
+          "/home/moramir/ITMO/ITMOv2/practices/practice_04/project/mcp/text-stats/server.py"
+        ]
       }
     }
   }
