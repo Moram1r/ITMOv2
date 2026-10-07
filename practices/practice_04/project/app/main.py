@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
 
-from .config import DEFAULT_TIMEOUT_SEC, MAX_MATCHES
-from .errors import to_http_error
+from .config import DEFAULT_TIMEOUT_SEC, MAX_MATCHES, MAX_TEXT_LEN, MAX_PATTERN_LEN
+from .errors import to_http_error, PayloadTooLargeError, InvalidPatternError, InvalidFlagsError
+from .flags import parse_flags
 from .engine import RegexEngine
 from .models import RegexTestRequest, RegexTestResponse, MatchModel
 
@@ -14,6 +15,14 @@ def get_engine() -> RegexEngine:
     return app.state.engine  # type: ignore[attr-defined]
 
 
+# Ensure engine is available even before FastAPI startup events run (e.g., in tests)
+# Tests may access app.state.engine directly prior to the first request.
+try:
+    app.state.engine
+except Exception:
+    app.state.engine = RegexEngine()
+
+
 @app.on_event("startup")
 def setup_state():
     app.state.engine = RegexEngine()
@@ -22,13 +31,25 @@ def setup_state():
 @app.post("/regex/test", response_model=RegexTestResponse)
 def test_regex(req: RegexTestRequest):
     """
-    Minimal starter implementation intentionally missing A-logic (413 checks and flags parsing)
-    so tests for A start RED. B timeout behavior is provided by the engine itself.
+    Implements Feature A: early 413 checks and flags validation before touching the engine.
+    Timeout handling is delegated to the engine (Feature B).
     """
     try:
+        # Early 413 checks — must happen before any engine interaction
+        if len(req.text) > MAX_TEXT_LEN or len(req.pattern) > MAX_PATTERN_LEN:
+            raise PayloadTooLargeError()
+
+        # Empty pattern → 400 (project requirement)
+        if not req.pattern:
+            raise InvalidPatternError('pattern must not be empty')
+
+        # Flags parsing/validation
+        flags_mask, invalid = parse_flags(req.flags)
+        if invalid:
+            raise InvalidFlagsError(invalid[0])
+
         engine = get_engine()
-        # Ignore flags for now (A will add validation and parsing)
-        compiled = engine.compile(req.pattern, 0)
+        compiled = engine.compile(req.pattern, flags_mask)
 
         limit = req.limit or MAX_MATCHES
         timeout_sec = req.timeout_sec or DEFAULT_TIMEOUT_SEC

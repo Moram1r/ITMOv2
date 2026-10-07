@@ -11,15 +11,8 @@ class RegexTestRequest(BaseModel):
     limit: int | None = None
     timeout_sec: float | None = None
 
-    @field_validator('pattern')
-    @classmethod
-    def non_empty_pattern(cls, v: str) -> str:
-        if not v:
-            raise ValueError('pattern must not be empty')
-        if len(v) > MAX_PATTERN_LEN:
-            # We'll convert to 413 at the endpoint layer to satisfy A rules
-            return v
-        return v
+    # Do not raise here for empty/oversize to avoid 422; handle in endpoint for 400/413
+    # This keeps control of status codes per project requirements
 
     @field_validator('text')
     @classmethod
