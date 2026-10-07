@@ -1,4 +1,7 @@
 {
+  "plugins": [
+    "./.opencode/plugins/check-after-edit.js"
+  ],
   "mcp": {
     "servers": {
       "context7": {
