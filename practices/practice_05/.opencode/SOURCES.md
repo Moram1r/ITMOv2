@@ -34,3 +34,17 @@
   Настройки и локальный хук проверяются на установленном OpenCode 2.0.30;
   формат V2 дополнительно сверен с его `/openapi.json` и публичным интерфейсом
   пакета `@opencode/plugin` (Promise API).
+
+## Spec Kit
+
+- [GitHub Spec Kit v1.2.3](https://github.com/github/spec-kit/tree/v1.2.3),
+  официальный пакет [specify-cli на PyPI](https://pypi.org/project/specify-cli/1.2.3/).
+  Лицензия MIT сохранена в `.specify/LICENSE`.
+- Инициализация: `specify init --here --force --non-interactive --integration opencode
+  --script sh --integration-options="--events false"`. Перед установкой проверена
+  в отдельном временном каталоге. Шаблоны и команды сгенерированы штатным CLI;
+  их содержимое вручную не переписывалось.
+- Локальные дополнения: `.opencode/bin/specify` и плагин `spec-kit-env.js`
+  обеспечивают PATH и `SPECIFY_INIT_DIR` для работы внутри одной практики.
+- [Интеграция OpenCode](https://github.github.io/spec-kit/integrations/opencode.html),
+  [установка](https://github.github.io/spec-kit/installation.html).

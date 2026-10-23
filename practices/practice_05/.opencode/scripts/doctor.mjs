@@ -44,13 +44,16 @@ try {
     const skills = (await api('GET', '/api/skill')).data;
     const mcp = (await api('GET', '/api/mcp')).data;
     const hook = plugins.find(plugin => plugin.id === 'practice05-quality-gate');
+    const specKitEnv = plugins.find(plugin => plugin.id === 'practice05-spec-kit-env');
     if (hook?.state.status === 'failed') throw new Error(hook.state.error);
+    if (specKitEnv?.state.status === 'failed') throw new Error(specKitEnv.state.error);
     const names = ['frontend-design', 'test-driven-development', 'systematic-debugging'];
     const servers = ['context7', 'playwright'];
     for (const server of mcp.filter(server => servers.includes(server.name))) {
       if (server.status.status === 'failed') throw new Error(`${server.name}: ${server.status.error}`);
     }
     ready = hook?.state.status === 'active'
+      && specKitEnv?.state.status === 'active'
       && names.every(name => skills.some(skill => skill.id === name && skill.description))
       && servers.every(name => mcp.some(server => server.name === name && server.status.status === 'connected'))
       && mcp.find(server => server.name === 'text-stats')?.status.status === 'disabled';
@@ -66,7 +69,29 @@ try {
   if (!['check', 'env-check'].every(name => commands.some(command => command.name === name))) {
     throw new Error('Local commands were not registered.');
   }
+  const specCommands = ['constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'converge', 'checklist', 'taskstoissues'];
+  if (!specCommands.every(name => commands.some(command => command.name === `speckit.${name}`))) {
+    throw new Error('Spec Kit commands were not registered.');
+  }
+  await api('POST', `/api/session/${sessionID}/shell`, {
+    command: 'command -v specify && specify version && specify integration status && node -e \'console.log("SPECIFY_INIT_DIR=" + process.env.SPECIFY_INIT_DIR)\'',
+  });
+  let shellResult;
+  const shellDeadline = Date.now() + 15000;
+  while (Date.now() < shellDeadline) {
+    const messages = (await api('GET', `/api/session/${sessionID}/message`)).data;
+    shellResult = messages.find(message => message.type === 'shell' && message.status !== 'running');
+    if (shellResult) break;
+    await delay(200);
+  }
+  const shellOutput = shellResult?.output?.output ?? '';
+  if (shellResult?.exit !== 0 || !shellOutput.includes('1.2.3') || !shellOutput.includes('Integration status: OK')
+    || !shellOutput.includes(`SPECIFY_INIT_DIR=${path.resolve(root)}`)
+    || !shellOutput.includes(path.join(root, '.opencode/bin/specify'))) {
+    throw new Error(`Spec Kit is not usable in the OpenCode shell: ${shellOutput.slice(0, 1500)}`);
+  }
   console.log('OK: OpenCode обнаружил 3 навыка, активный хук, /check и /env-check.');
+  console.log('OK: 10 команд Spec Kit зарегистрированы; specify 1.2.3 работает в shell OpenCode с корнем practice_05.');
   console.log('OK: Context7 и Playwright подключены; text-stats отключён в этой практике.');
   console.log('OK: настройки провайдера унаследованы; запросов к модели не было.');
 } catch (error) {
