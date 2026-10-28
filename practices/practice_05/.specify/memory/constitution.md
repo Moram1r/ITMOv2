@@ -1,50 +1,97 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Конституция проекта «Рентген проекта»
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Браузер — граница доверия
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Анализ ZIP, построение графа зависимостей и подготовка результатов выполняются
+в браузере. Содержимое архива не отправляется на сервер и не покидает устройство
+пользователя. Серверная часть добавляется только при доказанной необходимости,
+отдельным решением человека и с явным описанием того, какие данные и зачем
+передаются.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Архив — данные, а не код
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Загруженный ZIP и его содержимое рассматриваются только как данные. Приложение
+не выполняет и не импортирует загруженный код, не использует `eval` или
+`new Function`, не запускает скрипты и не читает секреты. Файлы, похожие на
+секреты (`.env`, ключи, токены), не анализируются и не показываются; для них
+допускается только факт наличия в архиве, если это требуется спецификацией.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Ограниченный и предсказуемый анализ
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+У анализа есть явные лимиты: размер ZIP, число записей, суммарный распакованный
+объём, а для графа — число узлов, число рёбер и глубина обхода. При превышении
+лимита показывается понятная ошибка, а не зависание или падение. Лимиты хранятся
+в одном месте, видны пользователю и покрыты тестами.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Честный граф без домыслов
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Граф показывает только те связи, которые удалось установить поддерживаемым
+статическим правилом. Нераспознанные файлы, динамические импорты и спорные случаи
+не дорисовываются: они помечаются как неизвестные или пропускаются с пояснением.
+Результат анализа — это карта того, что удалось доказать, а не утверждение о
+полной архитектуре проекта.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Простота и отсутствие скрытых сервисов
+
+Выбираем минимальный стек и минимальное число зависимостей. В приложении нет
+платных API, внешних ИИ-сервисов, скрытой телеметрии и фоновой отправки данных.
+Новая зависимость добавляется только с обоснованием; сложность должна окупаться
+пользой для пользователя.
+
+### VI. Сначала контракт, потом код
+
+Новая функция проходит через две спецификации — UI и логики — и общий контракт.
+Код не пишется, пока человек не согласовал поведение, данные, вызовы, ошибки и
+состояния. Если по ходу работы появляется новый факт, сначала обновляется
+спецификация, а не расширяется код.
+
+### VII. Проверяемость и доступность
+
+У каждой функции есть проверяемые условия приёмки. Логика анализа и графа
+покрывается тестами; интерфейс проверяется в браузере, включая клавиатуру,
+узкий экран и ошибки. Перед завершением задачи запускается `npm run check`
+в `project/`; пропущенная проверка не считается успешной.
+
+## Additional Constraints
+
+- Стек первой версии: React + Vite + TypeScript; анализ выполняется на клиенте.
+- Правила зависимостей и поддерживаемые типы файлов определяются спецификацией.
+  Файлы неподдерживаемого типа могут отображаться узлами без связей; это должно
+  быть видно пользователю.
+- Граф не заменяет таблицу файлов: таблица остаётся способом проверить путь,
+  расширение и размер.
+- Все размеры и лимиты показываются в понятных единицах; сообщения об ошибках —
+  на русском и без технического шума.
+- Загруженные данные не логируются, не сохраняются между сессиями и не
+  передаются третьим сторонам без явного действия пользователя.
+- HTML, имена файлов и пути из архива экранируются при выводе; внешние ссылки
+  не открываются автоматически.
+
+## Development Workflow
+
+1. Человек выбирает одну небольшую фичу и фиксирует 3–5 условий приёмки.
+2. Два чата — UI и логика — пишут две независимые спецификации.
+3. Команды согласуют общий контракт: типы, вызовы, ошибки, состояния и границы.
+4. Человек читает и принимает обе спецификации и контракт.
+5. Реализация идёт по плану Spec Kit; при новом факте сначала обновляются
+   спецификации.
+6. Проверяются основной сценарий, ошибка и граница; результаты проверок
+   прикладываются к сдаче.
+7. Спецификации «до/после», контракт, код, проверки и короткое демо сохраняются
+   как артефакты фичи.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- Конституция выше отдельных привычек и локальных договорённостей.
+- Изменения принимает человек; агент может предложить поправку, но не утверждает
+  её сам.
+- Версионирование: MAJOR — удаление или переопределение принципа; MINOR — новый
+  принцип или существенное расширение; PATCH — уточнение формулировки.
+- Каждая фича проверяется на соответствие принципам; отступление должно быть
+  явно обосновано и одобрено человеком.
+- Текущая версия: 1.0.0. Ратифицирована: 2026-10-28. Последнее изменение:
+  2026-10-28.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-28 | **Last Amended**: 2026-10-28
