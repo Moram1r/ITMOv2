@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { root, tools, browserPath, libraryPath } from './paths.mjs';
+import { tools, browserPath, libraryPath } from './paths.mjs';
 
 const require = createRequire(path.join(tools, 'package.json'));
 const cli = path.join(path.dirname(require.resolve('playwright-core/package.json')), 'cli.js');
@@ -33,8 +33,7 @@ if (process.platform === 'linux' && missingLibraries().length) {
   const extractDir = path.join(tools, '.cache', 'system-libs');
   mkdirSync(downloadDir, { recursive: true });
   mkdirSync(extractDir, { recursive: true });
-  const config = JSON.parse(readFileSync(path.join(root, 'opencode.json'), 'utf8'));
-  const proxy = process.env.CONTEXT7_WINDOWS_PROXY ?? config.mcp.servers.context7.environment?.CONTEXT7_WINDOWS_PROXY;
+  const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy;
   const windowsCurl = '/mnt/c/Windows/System32/curl.exe';
   if (proxy && existsSync(windowsCurl)) {
     const plan = spawnSync('apt-get', ['--print-uris', 'download', ...packages], { encoding: 'utf8' });

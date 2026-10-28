@@ -6,22 +6,6 @@
   "share": "disabled",
   "mcp": {
     "servers": {
-      "context7": {
-        "type": "local",
-        "command": [
-          "node",
-          ".opencode/scripts/context7-mcp.mjs"
-        ],
-        "environment": {
-          "CONTEXT7_WINDOWS_PROXY": "http://127.0.0.1:10809"
-        },
-        "codemode": false,
-        "timeout": {
-          "startup": 30000,
-          "catalog": 30000,
-          "execution": 60000
-        }
-      },
       "playwright": {
         "type": "local",
         "command": [
@@ -34,15 +18,6 @@
           "catalog": 30000,
           "execution": 60000
         }
-      },
-      "text-stats": {
-        "type": "local",
-        "command": [
-          "node",
-          "-e",
-          "process.exit(0)"
-        ],
-        "disabled": true
       }
     }
   },
