@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+speckit_tools=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+speckit_python="$speckit_tools/.cache/spec-kit/venv/bin/python"
+if [ ! -x "$speckit_python" ]; then
+  echo 'Spec Kit CLI is not installed. Run: sh .opencode/scripts/install-spec-kit.sh' >&2
+  exit 1
+fi
+SPECIFY_INIT_DIR=${SPECIFY_INIT_DIR:-$(dirname -- "$speckit_tools")}
+export SPECIFY_INIT_DIR
+exec "$speckit_tools/.cache/spec-kit/venv/bin/specify" "$@"

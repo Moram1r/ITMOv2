@@ -1,0 +1,17 @@
+{
+  "name": "practice-05-agent-environment",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "smoke:mcp": "node scripts/smoke-mcp.mjs",
+    "test:hook": "node scripts/test-hook.mjs",
+    "browser:install": "node scripts/install-browser.mjs"
+  },
+  "dependencies": {
+    "@playwright/mcp": "0.0.83",
+    "@modelcontextprotocol/sdk": "1.32.1"
+  }
+}
